@@ -1,6 +1,31 @@
-import React from 'react'
+import React, {useContext, useEffect} from 'react'
+import {StateContext} from './contexts'
+import {useResource} from 'react-request-hook'
 
-export default function Todo({title, description, dateCreated, complete, dateCompleted, user, todoId, dispatchTodos}){
+export default function Todo({title, description, dateCreated, complete, dateCompleted, user, id, todoId}){
+
+  const {dispatch} = useContext(StateContext)
+
+  const [todo, deleteTodo] = useResource((id) => ({
+    url:`/todos/${encodeURI(id)}`,
+    method:'delete'
+  }))
+
+  function handleDelete(){
+    deleteTodo(id)
+    dispatch({type:"DELETE_TODO", index:todoId})
+  }
+
+  const [updatedTodo, toggleTodo] = useResource(({complete}, id) => ({
+    url:`/todos/${encodeURI(id)}`,
+    method:'patch',
+    data:{complete:!complete, dateCompleted:completeDateGetter(!complete)}
+  }))
+
+  function handleToggle(){
+    toggleTodo({complete}, id)
+    dispatch({type:"TOGGLE_TODO", index:todoId, completeCheck:!complete, completedDateVal:completeDateGetter(!complete)})
+  }
 
   return(
     <div>
@@ -11,13 +36,13 @@ export default function Todo({title, description, dateCreated, complete, dateCom
         <br />
         <div><i>Date Created: {dateCreated}</i></div>
         <br />
-        <div><i>Complete: <input type="checkbox" checked={complete} onClick={e=> dispatchTodos({type:"TOGGLE_TODO", index:todoId, completeCheck:!complete, completedDateVal:completeDateGetter(!complete)})} /></i></div>
+        <div><i>Complete: <input type="checkbox" checked={complete} onClick={e=> handleToggle()} /></i></div>
         <br />
         <div><i>Date Completed: {dateCompleted}</i></div>
         <br />
         <i>Added by <b>{user}</b></i><br /><br />
 
-        <button onClick={e => dispatchTodos({type:"DELETE_TODO", index:todoId})}>Delete</button>
+        <button onClick={e =>handleDelete()}>Delete</button>
 
    </div>
  )
