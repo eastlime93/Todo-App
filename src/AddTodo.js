@@ -1,7 +1,10 @@
+import React, {useState, useContext,useEffect} from 'react'
+import {StateContext} from './contexts'
+import {useResource} from 'react-request-hook'
 
-import React, {useState} from 'react'
-
-export default function AddTodo({user, dispatchTodos}){
+export default function AddTodo(){
+  const {state,dispatch} = useContext(StateContext)
+  const {user} = state;
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -14,8 +17,25 @@ export default function AddTodo({user, dispatchTodos}){
   function handleTitle(evt){setTitle(evt.target.value)}
   function handleDescription(evt){setDescription(evt.target.value)}
 
+  const [todo, createTodo] = useResource(({title,description,dateCreated,complete,dateCompleted,user}) => ({
+    url:'/todos',
+    method:'post',
+    data:{title,description,dateCreated,complete,dateCompleted,user}
+  }))
+
+  function handleCreate(){
+    createTodo({title,description,dateCreated,complete,dateCompleted,user:user})
+
+  }
+
+  useEffect(() => {
+    if(todo && todo.isLoading === false && todo.data){
+      dispatch({type:'CREATE_TODO', title:todo.data.title, description:todo.data.description, dateCreated:todo.data.dateCreated, complete:todo.data.complete, dateCompleted:todo.data.dateCompleted, user:todo.data.user, id:todo.data.id})
+    }
+  },[todo])
+
   return (
-    <form onSubmit={e => {e.preventDefault(); dispatchTodos({type:"CREATE_TODO", title, description, dateCreated, complete, dateCompleted, user})}}>
+    <form onSubmit={e => {e.preventDefault(); handleCreate();}}>
         <div>User: <b>{user}</b></div>
         <div>
             <label htmlFor="add-title">Title:</label>
